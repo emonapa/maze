@@ -162,27 +162,23 @@ char start_border(Map *map, const int r, const int c, const char leftright) {
     unsigned char direction;
 
     if (c == 0) { // Left wall.
-        if (isborder(map, r, c, 0)) {
-            fprintf(stderr, "Starting position is not on the edge or the maze entrance is missing.\n");
-            return -1;
-        }
         direction = 0;
     }
     else if (c == map->cols - 1) { // Right wall.
-        if (isborder(map, r, c, 1)) {
-            fprintf(stderr, "Starting position is not on the edge or the maze entrance is missing.\n");
-            return -1;
-        }
         direction = 1;
     } 
-    else if (r == 0 || r == map->rows - 1) { // Upper or bottom wall.
-        if (isborder(map, r, c, 2)) {
-            fprintf(stderr, "Starting position is not on the edge or the maze entrance is missing.\n");
-            return -1;
-        }
-        direction = (r == 0) ? 2 : 3;
+    else if (r == 0) { // Upper wall.
+        direction = 2;
+    } 
+    else if (r == map->rows - 1) { // Bottom wall
+        direction = 3;
     } else {
-        fprintf(stderr, "Starting position is not on the edge or the maze entrance is missing.\n");
+        fprintf(stderr, "Starting position is not on the edge of the maze.\n");
+        return -1;
+    }
+
+    if (isborder(map, r, c, direction - (direction == 3 ? 1 : 0))) {
+        fprintf(stderr, "Starting position entrance is missing.\n");
         return -1;
     }
 
@@ -337,7 +333,6 @@ void findShortestPath(Map map, int r, int c) {
         visited[i] = false;
     }
     bool foundExit = false;
-
     
     // The project specification specifies that we have to write 
     // from beginning to end, so the auxiliary array path is added.
@@ -466,25 +461,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char resCreateMap = CreateMap(filename, &map);
-    if (resCreateMap != 0) {
+    char mapCreator = 0;
+    mapCreator = CreateMap(filename, &map) || LoadMap(filename, &map) || CheckValidity(&map);
+
+    if (mapCreator != 0) {
         DeleteMap(&map);
         return 1;
     }
 
-    char resLoadMap = LoadMap(filename, &map);   
-    if (resLoadMap != 0) { 
-        DeleteMap(&map);
-        return 1;
-    }
-
-    char resCheckVal = CheckValidity(&map);
-    if (resCheckVal != 0) {
-        DeleteMap(&map);
-        return 1;
-    }
-
-    if (leftright == 0) { // Shortest path
+    if (leftright == 0) { // leftright == 0 <=> shortest path
         findShortestPath(map, r - 1, c - 1);
         return 0;
     } 
